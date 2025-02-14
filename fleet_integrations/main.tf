@@ -68,7 +68,49 @@ resource "elasticstack_fleet_integration_policy" "sample" {
         }
     })
   }
-  depends_on = [
-    elasticstack_fleet_agent_policy.sample
-  ]
+}
+
+
+// The integration policy.
+resource "elasticstack_fleet_integration_policy" "tf-frontdoor" {
+  name                = "tf-frontdoor" # go to https://<kibana_endpoint>/api/fleet/epm/packages to see integration names
+  namespace           = "default"
+  description         = "A sample integration policy"
+  agent_policy_id     = elasticstack_fleet_agent_policy.sample.policy_id
+  integration_name    = "azure_frontdoor"
+  integration_version = "2.1.3"
+
+  input { # Use the Kibana UI and Preview API requesr to get inputs
+    input_id = "azure_frontdoor-azure-eventhub"
+    enabled  = true
+    vars_json = jsonencode({
+      "eventhub" : "evetnhub",
+      "consumer_group" : "$Default",
+      "connection_string" : "xx",
+      "storage_account" : "xx",
+      "storage_account_key" : "xxx"
+    })
+    streams_json = jsonencode({
+        "azure_frontdoor.access": {
+          "enabled": true,
+          "vars": {
+            "tags": [
+              "azure-frontdoor-access",
+              "forwarded"
+            ],
+            "preserve_original_event": false
+          }
+        },
+        "azure_frontdoor.waf": {
+          "enabled": true,
+          "vars": {
+            "tags": [
+              "azure-frontdoor-waf",
+              "forwarded"
+            ],
+            "preserve_original_event": false
+          }
+        }
+      })
+  }
 }
